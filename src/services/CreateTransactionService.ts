@@ -1,8 +1,8 @@
 import { getRepository } from 'typeorm';
-import Category from '../models/Category';
-// import AppError from '../errors/AppError';
 
 import Transaction from '../models/Transaction';
+import Category from '../models/Category';
+// import AppError from '../errors/AppError';
 
 interface Request {
   title: string;
@@ -21,17 +21,21 @@ class CreateTransactionService {
     const transactionsRepository = getRepository(Transaction);
     const categoriesRepository = getRepository(Category);
 
-    const existingCategory = await categoriesRepository.findOne({
+    let existingCategory = await categoriesRepository.findOne({
       title: category,
     });
 
-    const categoryId = existingCategory?.id ?? undefined;
+    if (!existingCategory) {
+      existingCategory = categoriesRepository.create({ title: category });
+
+      categoriesRepository.save(existingCategory);
+    }
 
     const transaction = transactionsRepository.create({
       title,
       value,
       type,
-      category_id: categoryId,
+      category_id: existingCategory?.id,
     });
 
     await transactionsRepository.save(transaction);
