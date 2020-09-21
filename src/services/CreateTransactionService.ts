@@ -22,13 +22,15 @@ class CreateTransactionService {
     const categoriesRepository = getRepository(Category);
 
     let existingCategory = await categoriesRepository.findOne({
-      title: category,
+      where: {
+        title: category,
+      },
     });
 
     if (!existingCategory) {
       existingCategory = categoriesRepository.create({ title: category });
 
-      categoriesRepository.save(existingCategory);
+      await categoriesRepository.save(existingCategory);
     }
 
     const transaction = transactionsRepository.create({
