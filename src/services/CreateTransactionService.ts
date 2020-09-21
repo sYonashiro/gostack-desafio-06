@@ -1,8 +1,9 @@
-import { getRepository } from 'typeorm';
+import { getCustomRepository, getRepository } from 'typeorm';
 
 import Transaction from '../models/Transaction';
 import Category from '../models/Category';
-// import AppError from '../errors/AppError';
+import TransactionsRepository from '../repositories/TransactionsRepository';
+import AppError from '../errors/AppError';
 
 interface Request {
   title: string;
@@ -18,8 +19,14 @@ class CreateTransactionService {
     type,
     category,
   }: Request): Promise<Transaction> {
-    const transactionsRepository = getRepository(Transaction);
+    const transactionsRepository = getCustomRepository(TransactionsRepository);
     const categoriesRepository = getRepository(Category);
+
+    const balance = await transactionsRepository.getBalance();
+
+    if (type === 'outcome' && value > balance.total) {
+      throw new AppError('Não há saldo suficiente em conta.');
+    }
 
     let existingCategory = await categoriesRepository.findOne({
       where: {
